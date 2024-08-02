@@ -1,4 +1,6 @@
-# ModTool mod support for Unity
+# ModTool mod support for Unity - Active scene only
+
+A fork of the ModTool that only exports the active scene and its dependencies.
 
 <a href="http://u3d.as/Diq">Asset Store</a>  | <a href="https://www.youtube.com/watch?v=9w_WlBPtclg">Youtube</a> | <a href="https://forum.unity3d.com/threads/modtool-mod-support-for-unity.442185/">Forum Thread</a>
 
