@@ -283,10 +283,25 @@ namespace ModTool.Editor.Exporting
             if ((ExportSettings.content & ModContent.Code) == ModContent.Code)                
                 data.assemblies = GetAssemblies();
 
-            data.assets = GetAssets("t:prefab t:scriptableobject");
-            data.scenes = GetAssets("t:scene");
+            var sceneName = EditorSceneUtility.ActiveSceneName;
 
-            //TODO: add other asset types like TextAsset?
+            // get the active scene
+            data.scenes = GetAssets($"t:scene {sceneName}");
+            if (data.scenes.Count < 1)
+            {
+                Debug.LogError("Active scene not found in project.");
+                return;
+            }
+
+            var mainScene = data.scenes[0];
+
+            // save the scene's dependencies
+            var dependencies = AssetDatabase.GetDependencies(mainScene.assetPath, true);
+            data.assets = GetAssetsFromPaths(dependencies);
+
+            // don't save the scene twice..
+            var sceneIndex = data.assets.FindIndex(asset => asset.name.Contains(sceneName));
+            data.assets.RemoveAt(sceneIndex);
 
             ModContent content = ExportSettings.content;
 
@@ -311,6 +326,30 @@ namespace ModTool.Editor.Exporting
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
 
+                if (path.Contains("/ModTool/") || path.Contains("/Editor/"))
+                    continue;
+
+                if (path.StartsWith("Packages"))
+                    continue;
+
+                if (ModToolSettings.sharedAssets.Contains(path))
+                    continue;
+
+                //NOTE: AssetDatabase.FindAssets() can contain duplicates for some reason
+                if (assets.Exists(a => a.assetPath == path))
+                    continue;
+
+                assets.Add(new Asset(path));
+            }
+
+            return assets;
+        }
+
+        private List<Asset> GetAssetsFromPaths(string[] paths)
+        {
+            List<Asset> assets = new List<Asset>();
+            foreach (string path in paths)
+            {
                 if (path.Contains("/ModTool/") || path.Contains("/Editor/"))
                     continue;
 
